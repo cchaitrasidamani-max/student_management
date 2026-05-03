@@ -2,6 +2,7 @@ package com.sms.dto;
 
 import com.sms.entity.Result;
 import jakarta.validation.constraints.*;
+import java.time.LocalDate;
 
 public class ResultRequest {
     @NotNull private Long studentId;
@@ -10,6 +11,8 @@ public class ResultRequest {
     @NotNull private Result.ExamType examType;
     @NotNull @Min(0) private Double marksObtained;
     @NotNull @Min(1) private Double maxMarks;
+    @PastOrPresent(message = "Result date cannot be in the future")
+    private LocalDate resultDate;
     private String remarks;
 
     public ResultRequest() {}
@@ -31,6 +34,9 @@ public class ResultRequest {
 
     public Double getMaxMarks() { return maxMarks; }
     public void setMaxMarks(Double maxMarks) { this.maxMarks = maxMarks; }
+
+    public LocalDate getResultDate() { return resultDate; }
+    public void setResultDate(LocalDate resultDate) { this.resultDate = resultDate; }
 
     public String getRemarks() { return remarks; }
     public void setRemarks(String remarks) { this.remarks = remarks; }

@@ -6,13 +6,22 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 
 const SUBJECTS = ['Data Structures','Algorithms','DBMS','Operating Systems','Computer Networks','Software Engineering','Web Technologies','Mathematics']
 const EXAM_TYPES = ['INTERNAL','MIDTERM','FINAL','ASSIGNMENT','PRACTICAL']
-const EMPTY_FORM = { studentId:'', subject:'', semester:1, examType:'INTERNAL', marksObtained:'', maxMarks:100, remarks:'' }
+const todayInputValue = () => {
+  const today = new Date()
+  const yyyy = today.getFullYear()
+  const mm = String(today.getMonth() + 1).padStart(2, '0')
+  const dd = String(today.getDate()).padStart(2, '0')
+  return `${yyyy}-${mm}-${dd}`
+}
+const emptyForm = () => ({ studentId:'', subject:'', semester:1, examType:'INTERNAL', marksObtained:'', maxMarks:100, resultDate:todayInputValue(), remarks:'' })
+const sortByResultDate = (results = []) =>
+  [...results].sort((a, b) => String(b.resultDate || b.createdAt || '').localeCompare(String(a.resultDate || a.createdAt || '')))
 
 export default function ResultsPage() {
   const { user } = useAuth()
   const [tab, setTab] = useState('enter')
   const [students, setStudents] = useState([])
-  const [form, setForm] = useState(EMPTY_FORM)
+  const [form, setForm] = useState(emptyForm)
   const [saving, setSaving] = useState(false)
 
   // Report
@@ -21,6 +30,7 @@ export default function ResultsPage() {
   const [loadingReport, setLoadingReport] = useState(false)
 
   const canEdit = ['ADMIN','FACULTY'].includes(user?.role)
+  const maxResultDate = todayInputValue()
 
   useEffect(() => {
     studentAPI.getAll().then(r => setStudents(r.data.data || []))
@@ -35,6 +45,8 @@ export default function ResultsPage() {
     if (Number(form.marksObtained) > Number(form.maxMarks)) {
       return toast.error('Marks obtained cannot exceed max marks')
     }
+    if (!form.resultDate) return toast.error('Select result date')
+    if (form.resultDate > maxResultDate) return toast.error('Result date cannot be in the future')
     setSaving(true)
     try {
       const payload = {
@@ -46,7 +58,7 @@ export default function ResultsPage() {
       }
       await resultAPI.add(payload)
       toast.success('Result added successfully!')
-      setForm(EMPTY_FORM)
+      setForm(emptyForm())
     } catch (err) { toast.error(err.response?.data?.message || 'Failed') }
     finally { setSaving(false) }
   }
@@ -130,6 +142,10 @@ export default function ResultsPage() {
                 <div className="form-group">
                   <label className="form-label">Max Marks</label>
                   <input className="form-input" type="number" value={form.maxMarks} onChange={f('maxMarks')} />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Result Date *</label>
+                  <input className="form-input" type="date" max={maxResultDate} value={form.resultDate} onChange={f('resultDate')} />
                 </div>
               </div>
               <div className="form-group">
@@ -225,6 +241,7 @@ export default function ResultsPage() {
                     <thead>
                       <tr>
                         <th>Subject</th>
+                        <th>Date</th>
                         <th>Exam Type</th>
                         <th>Semester</th>
                         <th>Marks</th>
@@ -233,9 +250,10 @@ export default function ResultsPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {(report.results || []).map(r => (
+                      {sortByResultDate(report.results || []).map(r => (
                         <tr key={r.id}>
                           <td style={{ fontWeight:500 }}>{r.subject}</td>
+                          <td>{r.resultDate || r.createdAt?.slice(0, 10) || '—'}</td>
                           <td><span className="badge badge-blue" style={{ fontSize:10 }}>{r.examType}</span></td>
                           <td>Sem {r.semester}</td>
                           <td>{r.marksObtained} / {r.maxMarks}</td>

@@ -38,6 +38,7 @@ export const attendanceAPI = {
   mark: (data) => api.post('/attendance', data),
   markBulk: (data) => api.post('/attendance/bulk', data),
   getByStudent: (id) => api.get(`/attendance/student/${id}`),
+  getByCourseDate: (courseId, subject, date) => api.get(`/attendance/course/${courseId}`, { params: { subject, date } }),
   getSummary: (id) => api.get(`/attendance/summary/${id}`),
 }
 

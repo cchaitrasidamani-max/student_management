@@ -6,7 +6,9 @@ import jakarta.validation.constraints.*;
 public class UserRequest {
     @NotBlank private String username;
     @NotBlank private String password;
-    @NotBlank private String fullName;
+    @NotBlank
+    @Pattern(regexp = "[A-Za-z][A-Za-z .'-]*", message = "Full name should contain letters only")
+    private String fullName;
     @Email @NotBlank private String email;
     @NotNull private User.Role role;
     @Pattern(regexp = "\\d{10}", message = "Phone number must be exactly 10 digits") private String phone;

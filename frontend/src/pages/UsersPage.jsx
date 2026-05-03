@@ -3,6 +3,8 @@ import { userAPI } from '../services/api'
 import toast from 'react-hot-toast'
 
 const EMPTY = { username: '', password: '', fullName: '', email: '', phone: '', role: 'FACULTY' }
+const NAME_RE = /^[A-Za-z][A-Za-z .'-]*$/
+const PHONE_RE = /^\d{10}$/
 
 export default function UsersPage() {
   const [users, setUsers] = useState([])
@@ -26,10 +28,13 @@ export default function UsersPage() {
 
   const handleSave = async () => {
     if (!form.username || !form.password || !form.fullName || !form.email) return toast.error('Fill all required fields')
+    if (!NAME_RE.test(form.fullName.trim())) return toast.error('Full name should contain letters only')
+    if (form.phone && !PHONE_RE.test(form.phone)) return toast.error('Phone number must be exactly 10 digits')
     setSaving(true)
     try {
-      if (editing) await userAPI.update(editing.id, form)
-      else await userAPI.create(form)
+      const payload = { ...form, fullName: form.fullName.trim(), phone: form.phone || null }
+      if (editing) await userAPI.update(editing.id, payload)
+      else await userAPI.create(payload)
       toast.success(editing ? 'User updated!' : 'User created!')
       setModal(null)
       load()
@@ -44,6 +49,7 @@ export default function UsersPage() {
   }
 
   const f = k => e => setForm(p => ({ ...p, [k]: e.target.value }))
+  const phoneField = e => setForm(p => ({ ...p, phone: e.target.value.replace(/\D/g, '').slice(0, 10) }))
 
   return (
     <div>
@@ -115,7 +121,7 @@ export default function UsersPage() {
               </div>
               <div className="form-group">
                 <label className="form-label">Full Name *</label>
-                <input className="form-input" value={form.fullName} onChange={f('fullName')} />
+                <input className="form-input" value={form.fullName} onChange={f('fullName')} pattern="[A-Za-z .'-]+" />
               </div>
               <div className="grid-2">
                 <div className="form-group">
@@ -124,7 +130,7 @@ export default function UsersPage() {
                 </div>
                 <div className="form-group">
                   <label className="form-label">Phone</label>
-                  <input className="form-input" value={form.phone} onChange={f('phone')} />
+                  <input className="form-input" type="tel" inputMode="numeric" maxLength="10" pattern="\d{10}" value={form.phone} onChange={phoneField} />
                 </div>
               </div>
               <div className="form-group">

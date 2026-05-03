@@ -1,6 +1,7 @@
 package com.sms.dto;
 
 import com.sms.entity.Result;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 public class ResultResponse {
@@ -13,6 +14,7 @@ public class ResultResponse {
     private Result.ExamType examType;
     private Double marksObtained;
     private Double maxMarks;
+    private LocalDate resultDate;
     private Double percentage;
     private String grade;
     private String enteredByName;
@@ -29,6 +31,7 @@ public class ResultResponse {
         r.setExamType(res.getExamType());
         r.setMarksObtained(res.getMarksObtained());
         r.setMaxMarks(res.getMaxMarks());
+        r.setResultDate(res.getResultDate());
         r.setPercentage(res.getPercentage());
         r.setGrade(res.getGrade());
         r.setRemarks(res.getRemarks());
@@ -70,6 +73,9 @@ public class ResultResponse {
 
     public Double getMaxMarks() { return maxMarks; }
     public void setMaxMarks(Double maxMarks) { this.maxMarks = maxMarks; }
+
+    public LocalDate getResultDate() { return resultDate; }
+    public void setResultDate(LocalDate resultDate) { this.resultDate = resultDate; }
 
     public Double getPercentage() { return percentage; }
     public void setPercentage(Double percentage) { this.percentage = percentage; }

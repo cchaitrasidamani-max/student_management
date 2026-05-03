@@ -7,6 +7,15 @@ const EMPTY = {
   rollNumber:'', firstName:'', lastName:'', email:'', phone:'',
   address:'', dateOfBirth:'', gender:'', courseId:'', semester:1, status:'ACTIVE'
 }
+const NAME_RE = /^[A-Za-z][A-Za-z .'-]*$/
+const PHONE_RE = /^\d{10}$/
+const todayInputValue = () => {
+  const today = new Date()
+  const yyyy = today.getFullYear()
+  const mm = String(today.getMonth() + 1).padStart(2, '0')
+  const dd = String(today.getDate()).padStart(2, '0')
+  return `${yyyy}-${mm}-${dd}`
+}
 
 export default function StudentsPage() {
   const { user } = useAuth()
@@ -22,6 +31,7 @@ export default function StudentsPage() {
   const [deleting, setDeleting] = useState(null)
 
   const isAdmin = user?.role === 'ADMIN'
+  const maxDateOfBirth = todayInputValue()
 
   const load = async () => {
     setLoading(true)
@@ -59,9 +69,25 @@ export default function StudentsPage() {
     if (!form.rollNumber || !form.firstName || !form.lastName || !form.email || !form.courseId) {
       return toast.error('Fill required fields')
     }
+    if (!NAME_RE.test(form.firstName.trim()) || !NAME_RE.test(form.lastName.trim())) {
+      return toast.error('Student name should contain letters only')
+    }
+    if (form.phone && !PHONE_RE.test(form.phone)) {
+      return toast.error('Phone number must be exactly 10 digits')
+    }
+    if (form.dateOfBirth && form.dateOfBirth > maxDateOfBirth) {
+      return toast.error('Date of birth cannot be in the future')
+    }
     setSaving(true)
     try {
-      const payload = { ...form, courseId: Number(form.courseId), semester: Number(form.semester) }
+      const payload = {
+        ...form,
+        firstName: form.firstName.trim(),
+        lastName: form.lastName.trim(),
+        phone: form.phone || null,
+        courseId: Number(form.courseId),
+        semester: Number(form.semester)
+      }
       if (modal === 'add') {
         await studentAPI.create(payload)
         toast.success('Student added!')
@@ -88,6 +114,7 @@ export default function StudentsPage() {
   }
 
   const f = (k) => e => setForm(p => ({ ...p, [k]: e.target.value }))
+  const phoneField = e => setForm(p => ({ ...p, phone: e.target.value.replace(/\D/g, '').slice(0, 10) }))
 
   return (
     <div>
@@ -196,11 +223,11 @@ export default function StudentsPage() {
               <div className="grid-2" style={{ gap: 14 }}>
                 <div className="form-group">
                   <label className="form-label">First Name *</label>
-                  <input className="form-input" value={form.firstName} onChange={f('firstName')} placeholder="Aarav" />
+                  <input className="form-input" value={form.firstName} onChange={f('firstName')} placeholder="Aarav" pattern="[A-Za-z .'-]+" />
                 </div>
                 <div className="form-group">
                   <label className="form-label">Last Name *</label>
-                  <input className="form-input" value={form.lastName} onChange={f('lastName')} placeholder="Sharma" />
+                  <input className="form-input" value={form.lastName} onChange={f('lastName')} placeholder="Sharma" pattern="[A-Za-z .'-]+" />
                 </div>
                 <div className="form-group">
                   <label className="form-label">Roll Number *</label>
@@ -212,11 +239,11 @@ export default function StudentsPage() {
                 </div>
                 <div className="form-group">
                   <label className="form-label">Phone</label>
-                  <input className="form-input" value={form.phone} onChange={f('phone')} placeholder="9876543210" />
+                  <input className="form-input" type="tel" inputMode="numeric" maxLength="10" pattern="\d{10}" value={form.phone} onChange={phoneField} placeholder="9876543210" />
                 </div>
                 <div className="form-group">
                   <label className="form-label">Date of Birth</label>
-                  <input className="form-input" type="date" value={form.dateOfBirth} onChange={f('dateOfBirth')} />
+                  <input className="form-input" type="date" max={maxDateOfBirth} value={form.dateOfBirth} onChange={f('dateOfBirth')} />
                 </div>
                 <div className="form-group">
                   <label className="form-label">Gender</label>

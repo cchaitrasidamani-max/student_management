@@ -43,12 +43,10 @@ public class AttendanceService {
                 .orElseThrow(() -> new RuntimeException("Student not found"));
         
         List<Attendance> byStudentAndSubjectAndDate = attendanceRepository.findByStudentAndSubjectAndDate(req.getStudentId(), req.getSubject(), req.getAttendanceDate());
-        
-        if(!byStudentAndSubjectAndDate.isEmpty()) {
-        	throw new RuntimeException("Attendance already marked");
-        }
 
-        Attendance attendance = new Attendance();
+        Attendance attendance = byStudentAndSubjectAndDate.isEmpty()
+                ? new Attendance()
+                : byStudentAndSubjectAndDate.get(0);
         attendance.setStudent(student);
         attendance.setSubject(req.getSubject());
         attendance.setAttendanceDate(req.getAttendanceDate());
@@ -69,7 +67,16 @@ public class AttendanceService {
     public List<AttendanceResponse> getByStudent(Long studentId) {
 
         return attendanceRepository
-                .findByStudentId(studentId)
+                .findByStudentIdOrderByAttendanceDateDescCreatedAtDesc(studentId)
+                .stream()
+                .map(AttendanceResponse::from)
+                .collect(Collectors.toList());
+    }
+
+    public List<AttendanceResponse> getByCourseSubjectDate(Long courseId, String subject, java.time.LocalDate date) {
+
+        return attendanceRepository
+                .findByCourseAndSubjectAndDate(courseId, subject, date)
                 .stream()
                 .map(AttendanceResponse::from)
                 .collect(Collectors.toList());
@@ -77,7 +84,7 @@ public class AttendanceService {
 
     public Map<String, Object> getSummary(Long studentId) {
 
-        List<Attendance> records = attendanceRepository.findByStudentId(studentId);
+        List<Attendance> records = attendanceRepository.findByStudentIdOrderByAttendanceDateDescCreatedAtDesc(studentId);
 
         Map<String, Long> totalBySubject = new HashMap<>();
         Map<String, Long> presentBySubject = new HashMap<>();

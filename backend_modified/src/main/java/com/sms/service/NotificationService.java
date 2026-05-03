@@ -1,6 +1,7 @@
 package com.sms.service;
 
 import com.sms.dto.NotificationResponse;
+import com.sms.dto.ResultResponse;
 import com.sms.entity.Student;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -27,19 +28,23 @@ public class NotificationService {
         Student student = resultService.getStudentByRollNumber(rollNumber);
 
         List<NotificationResponse> notifications = new ArrayList<>();
-        List<?> results = resultService.getByStudent(student.getId());
+        List<ResultResponse> results = resultService.getByStudent(student.getId());
 
         if (!results.isEmpty()) {
+            ResultResponse latest = results.get(0);
             Map<String, Object> meta = new HashMap<>();
             meta.put("resultCount", results.size());
+            meta.put("latestSubject", latest.getSubject());
+            meta.put("latestExamType", latest.getExamType());
+            meta.put("latestResultDate", latest.getResultDate());
             notifications.add(new NotificationResponse(
                     "New Results Available",
-                    "Your latest exam results are ready. Tap to review your scores.",
+                    String.format("Your %s result for %s is ready. Tap to review your scores.", latest.getExamType(), latest.getSubject()),
                     "/my-results",
                     "RESULT",
                     meta,
                     "Your exam results are available",
-                    String.format("Dear %s,\n\nYour latest exam results are now available on EduTrack. Please log in to view your updated scores and details.\n\nThank you,\nEduTrack Team", student.getFirstName())
+                    String.format("Dear %s,\n\nYour %s result for %s is now available on EduTrack. Please log in to view your updated scores and details.\n\nThank you,\nEduTrack Team", student.getFirstName(), latest.getExamType(), latest.getSubject())
             ));
         }
 

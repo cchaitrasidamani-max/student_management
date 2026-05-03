@@ -10,6 +10,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -25,6 +26,9 @@ public class ResultService {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private EmailService emailService;
 
     private User getCurrentUser() {
 
@@ -57,24 +61,50 @@ public class ResultService {
 
         double pct = (req.getMarksObtained() / req.getMaxMarks()) * 100;
 
-        Result result = new Result();
+        LocalDate resultDate = req.getResultDate() != null ? req.getResultDate() : LocalDate.now();
+        Result result = resultRepository
+                .findFirstByStudentIdAndSubjectAndExamTypeAndSemester(
+                        req.getStudentId(),
+                        req.getSubject(),
+                        req.getExamType(),
+                        req.getSemester()
+                )
+                .orElseGet(Result::new);
         result.setStudent(student);
         result.setSubject(req.getSubject());
         result.setSemester(req.getSemester());
         result.setExamType(req.getExamType());
         result.setMarksObtained(req.getMarksObtained());
         result.setMaxMarks(req.getMaxMarks());
+        result.setResultDate(resultDate);
         result.setGrade(computeGrade(pct));
         result.setEnteredBy(getCurrentUser());
         result.setRemarks(req.getRemarks());
 
-        return ResultResponse.from(resultRepository.save(result));
+        Result saved = resultRepository.save(result);
+        sendResultNotification(student, saved);
+
+        return ResultResponse.from(saved);
+    }
+
+    private void sendResultNotification(Student student, Result result) {
+        String subject = "New result available on EduTrack";
+        String body = String.format(
+                "Dear %s,%n%nYour %s result for %s is now available on EduTrack.%nMarks: %.1f / %.1f%nGrade: %s%n%nPlease log in to view full details.%n%nEduTrack Team",
+                student.getFirstName(),
+                result.getExamType(),
+                result.getSubject(),
+                result.getMarksObtained(),
+                result.getMaxMarks(),
+                result.getGrade()
+        );
+        emailService.sendEmail(student.getEmail(), subject, body);
     }
 
     public List<ResultResponse> getByStudent(Long studentId) {
 
         return resultRepository
-                .findByStudentId(studentId)
+                .findByStudentIdOrderByResultDateDescCreatedAtDesc(studentId)
                 .stream()
                 .map(ResultResponse::from)
                 .collect(Collectors.toList());
@@ -108,7 +138,7 @@ public class ResultService {
 
     public Map<String, Object> getReport(Long studentId) {
 
-        List<Result> results = resultRepository.findByStudentId(studentId);
+        List<Result> results = resultRepository.findByStudentIdOrderByResultDateDescCreatedAtDesc(studentId);
 
         Map<String, Object> report = new HashMap<>();
 
@@ -156,6 +186,8 @@ public class ResultService {
 
         return studentRepository
                 .findByRollNumber(rollNumber)
+                .or(() -> userRepository.findByUsername(rollNumber)
+                        .flatMap(user -> studentRepository.findByEmail(user.getEmail())))
                 .orElseThrow(() -> new RuntimeException("Student not found"));
     }
 }

@@ -6,11 +6,16 @@ import java.time.LocalDate;
 
 public class StudentRequest {
     @NotBlank private String rollNumber;
-    @NotBlank private String firstName;
-    @NotBlank private String lastName;
+    @NotBlank
+    @Pattern(regexp = "[A-Za-z][A-Za-z .'-]*", message = "First name should contain letters only")
+    private String firstName;
+    @NotBlank
+    @Pattern(regexp = "[A-Za-z][A-Za-z .'-]*", message = "Last name should contain letters only")
+    private String lastName;
     @Email @NotBlank private String email;
     @Pattern(regexp = "\\d{10}", message = "Phone number must be exactly 10 digits") private String phone;
     private String address;
+    @PastOrPresent(message = "Date of birth cannot be in the future")
     private LocalDate dateOfBirth;
     private Student.Gender gender;
     @NotNull private Long courseId;

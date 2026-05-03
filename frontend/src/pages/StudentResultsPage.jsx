@@ -2,6 +2,9 @@ import { useEffect, useState } from 'react'
 import { resultAPI } from '../services/api'
 import toast from 'react-hot-toast'
 
+const sortByResultDate = (results = []) =>
+  [...results].sort((a, b) => String(b.resultDate || b.createdAt || '').localeCompare(String(a.resultDate || a.createdAt || '')))
+
 export default function StudentResultsPage() {
   const [results, setResults] = useState([])
   const [loading, setLoading] = useState(true)
@@ -28,6 +31,7 @@ export default function StudentResultsPage() {
             <thead>
               <tr>
                 <th>Subject</th>
+                <th>Date</th>
                 <th>Semester</th>
                 <th>Exam Type</th>
                 <th>Marks</th>
@@ -36,9 +40,10 @@ export default function StudentResultsPage() {
               </tr>
             </thead>
             <tbody>
-              {results.map(r => (
+              {sortByResultDate(results).map(r => (
                 <tr key={r.id}>
                   <td>{r.subject}</td>
+                  <td>{r.resultDate || r.createdAt?.slice(0, 10) || '—'}</td>
                   <td>Semester {r.semester}</td>
                   <td>{r.examType}</td>
                   <td>{r.marksObtained}/{r.maxMarks}</td>

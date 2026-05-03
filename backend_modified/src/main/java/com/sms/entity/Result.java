@@ -1,12 +1,11 @@
 package com.sms.entity;
 
 import jakarta.persistence.*;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "results", uniqueConstraints = {
-    @UniqueConstraint(columnNames = {"student_id", "subject", "exam_type", "semester"})
-})
+@Table(name = "results")
 public class Result {
 
     @Id
@@ -32,6 +31,9 @@ public class Result {
 
     @Column(nullable = false)
     private Double maxMarks;
+
+    @Column
+    private LocalDate resultDate;
 
     @Column(nullable = false)
     private String grade;
@@ -85,6 +87,9 @@ public class Result {
 
     public Double getMaxMarks() { return maxMarks; }
     public void setMaxMarks(Double maxMarks) { this.maxMarks = maxMarks; }
+
+    public LocalDate getResultDate() { return resultDate; }
+    public void setResultDate(LocalDate resultDate) { this.resultDate = resultDate; }
 
     public String getGrade() { return grade; }
     public void setGrade(String grade) { this.grade = grade; }
